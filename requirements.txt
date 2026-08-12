@@ -1,2 +1,7 @@
 streamlit>=1.60
 plotly>=6.0
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2
+sqlalchemy>=2.0
+psycopg2-binary>=2.9
