@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Flife｜退休三層資產試算</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#0f172a">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+</head>
+<body>
+
+<header class="topbar">
+  <h1>Flife</h1>
+  <span class="subtitle">自由資產 × 勞退新制 × 勞保老年給付</span>
+</header>
+
+<main>
+
+  <!-- ============ 基本假設 ============ -->
+  <section class="card">
+    <h2>基本假設</h2>
+    <div class="grid">
+      <label>目前年齡
+        <input type="number" id="current_age" value="30" min="18" max="70">
+      </label>
+      <label>計畫退休年齡
+        <input type="number" id="retirement_age" value="50" min="19" max="80">
+      </label>
+      <label>試算到幾歲
+        <input type="number" id="death_age" value="90" min="20" max="110">
+      </label>
+    </div>
+  </section>
+
+  <!-- ============ Layer 1 ============ -->
+  <section class="card">
+    <h2>Layer 1｜自由資產</h2>
+    <div class="grid">
+      <label>目前自由資產（元）
+        <input type="number" id="current_layer1_balance" value="2247182" step="10000">
+      </label>
+      <label>退休前每年淨儲蓄（元）
+        <input type="number" id="annual_savings_pre_retirement" value="780000" step="10000">
+      </label>
+      <label>退休後年支出（今日幣值，元）
+        <input type="number" id="annual_expense_today" value="492000" step="10000">
+      </label>
+      <label>通膨率 <span id="inflation_rate_val">2.0%</span>
+        <input type="range" id="inflation_rate" min="0" max="0.06" step="0.005" value="0.02">
+      </label>
+      <label>退休前投資報酬率 <span id="pre_retirement_return_val">6.0%</span>
+        <input type="range" id="pre_retirement_return" min="0" max="0.12" step="0.005" value="0.06">
+      </label>
+      <label>退休後投資報酬率 <span id="post_retirement_return_val">4.5%</span>
+        <input type="range" id="post_retirement_return" min="0" max="0.10" step="0.005" value="0.045">
+      </label>
+    </div>
+  </section>
+
+  <!-- ============ Layer 2 ============ -->
+  <section class="card">
+    <h2>Layer 2｜勞退新制</h2>
+    <div class="grid">
+      <label>目前勞退個人專戶餘額（元）
+        <input type="number" id="pension_current_balance" value="150000" step="10000">
+      </label>
+      <label>每月提繳工資（元）
+        <input type="number" id="pension_contribution_base" value="60000" step="1000">
+      </label>
+      <label>提繳率 <span id="pension_contribution_rate_val">12%</span>
+        <input type="range" id="pension_contribution_rate" min="0.06" max="0.12" step="0.01" value="0.12">
+      </label>
+      <label>勞退基金假設年化報酬率 <span id="pension_return_val">4.0%</span>
+        <input type="range" id="pension_return" min="0" max="0.10" step="0.005" value="0.04">
+      </label>
+      <label>60歲後怎麼領
+        <select id="pension_take_as">
+          <option value="lump_sum">一次領</option>
+          <option value="monthly">月退</option>
+        </select>
+      </label>
+    </div>
+  </section>
+
+  <!-- ============ Layer 3 ============ -->
+  <section class="card">
+    <h2>Layer 3｜勞保老年給付</h2>
+    <div class="grid">
+      <label>平均月投保薪資（元）
+        <input type="number" id="insurance_avg_salary" value="45800" step="1000">
+      </label>
+      <label>預計請領時年資（年）
+        <input type="number" id="insurance_years" value="25" step="0.5">
+      </label>
+      <label>勞保請領年齡
+        <select id="insurance_claim_age">
+          <option>60</option><option>61</option><option>62</option>
+          <option>63</option><option>64</option><option>65</option>
+        </select>
+      </label>
+    </div>
+  </section>
+
+  <!-- ============ 人生事件 ============ -->
+  <section class="card">
+    <h2>人生事件</h2>
+    <p class="hint">買房頭期款、旅遊基金、轉職降薪…任何時間點都可以插入。</p>
+    <div class="grid event-form">
+      <label>年齡 <input type="number" id="ev_age" value="30"></label>
+      <label>事件名稱 <input type="text" id="ev_label" placeholder="例如：買房自備款"></label>
+      <label>金額（支出為負） <input type="number" id="ev_amount" value="-100000" step="10000"></label>
+      <label class="checkbox-label"><input type="checkbox" id="ev_recurring"> 每年重複</label>
+      <button id="add_event_btn">＋ 新增事件</button>
+    </div>
+    <table class="event-table">
+      <thead><tr><th>年齡</th><th>事件</th><th>金額</th><th>頻率</th><th></th></tr></thead>
+      <tbody id="event_list"></tbody>
+    </table>
+  </section>
+
+  <!-- ============ 動作按鈕 ============ -->
+  <section class="card actions">
+    <button id="simulate_btn" class="primary">▶ 執行試算</button>
+    <button id="run_mc_btn">▶ 執行蒙地卡羅模擬</button>
+  </section>
+
+  <!-- ============ 結果 ============ -->
+  <section class="card" id="result_section" hidden>
+    <h2>結果</h2>
+    <div class="metrics" id="metrics"></div>
+    <canvas id="chart" height="280"></canvas>
+  </section>
+
+  <section class="card" id="mc_section" hidden>
+    <h2>蒙地卡羅模擬結果</h2>
+    <div class="metrics" id="mc_metrics"></div>
+    <canvas id="mc_chart" height="280"></canvas>
+  </section>
+
+  <!-- ============ 情境比較 ============ -->
+  <section class="card">
+    <h2>情境比較</h2>
+    <p class="hint">你的資料以匿名裝置ID儲存，不需要登入；清瀏覽器資料會遺失，之後可加還原代碼機制。</p>
+    <div class="grid">
+      <label>情境名稱 <input type="text" id="scenario_name" placeholder="例如：50歲退休"></label>
+      <button id="save_scenario_btn">💾 另存為情境</button>
+    </div>
+    <table class="event-table">
+      <thead><tr><th><input type="checkbox" id="select_all_scenarios"></th><th>名稱</th><th>建立時間</th><th></th></tr></thead>
+      <tbody id="scenario_list"></tbody>
+    </table>
+    <button id="compare_btn">比較已選情境</button>
+    <canvas id="compare_chart" height="280"></canvas>
+  </section>
+
+</main>
+
+<footer>
+  <p>目前為固定報酬率／常態分布蒙地卡羅版本；勞退/勞保數字僅供示範，請替換成真實資料。</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
