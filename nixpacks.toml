@@ -1,0 +1,13 @@
+# nixpacks.toml — Railway 用的建置設定
+#
+# Railway預設會抓專案根目錄的 requirements.txt，但那份是給個人版Streamlit用的，
+# 這裡明確指定安裝 backend/requirements.txt，並用同一個指令啟動FastAPI。
+
+[phases.setup]
+nixPkgs = ["python312"]
+
+[phases.install]
+cmds = ["pip install -r backend/requirements.txt"]
+
+[start]
+cmd = "cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT"

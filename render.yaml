@@ -1,0 +1,15 @@
+# render.yaml — Render 用的服務設定
+#
+# 在 Render 建立 Web Service 時選「Use render.yaml」，或手動把下面的
+# Build Command / Start Command 貼到 Render 的表單欄位裡也可以。
+
+services:
+  - type: web
+    name: flife
+    env: python
+    region: singapore
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false
